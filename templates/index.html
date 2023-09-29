@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Face Recognition and Fall Detection Application</title>
-    <script src="../static/video.js"></script>
     <style>
-        h1{
+        h1 {
             color: #d7d7d7;
-            border:1px black;
-            margin:20px;
-            padding:10px;
+            border: 1px black;
+            margin: 20px;
+            padding: 10px;
             background-color: #324b62;
             border-radius: 10px;
         }
+
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -30,11 +31,11 @@
             box-shadow: 1px 1px rgb(197, 195, 195);
         }
 
-        button:hover{
-            background-color:#324b62;
-            color:white
+        button:hover {
+            background-color: #324b62;
+            color: white
         }
-        
+
         #videoStyle {
             max-width: 100%;
             height: auto;
@@ -47,30 +48,62 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Face Recognition and Fall Detection Application</h1>
     <button id="start">Start Video Feed</button>
     <button id="stop" disabled>Stop Video Feed</button>
     <img id="videoStyle" width="640" height="480">
-    
+
+    <!-- Add WebSocket and Notification handling scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
     <script>
         const start = document.getElementById('start');
         const stop = document.getElementById('stop');
         const videoFeed = document.getElementById('videoStyle');
+
         function startVideo() {
-            videoFeed.src = "/video_feed"; 
+            videoFeed.src = "/video_feed";
             start.disabled = true;
             stop.disabled = false;
         }
+
         function stopVideo() {
-            videoFeed.src = "image.jpg"; 
+            videoFeed.src = "image.jpg";
             start.disabled = false;
             stop.disabled = true;
         }
+
+        const socket = io('/notification');
         
+        socket.on('notification', (message) => {
+            // Handle the notification here
+            console.log('Notification:', message);
+            
+            // Display a desktop notification
+            if (Notification.permission === 'granted') {
+                new Notification('Fall Detection', {
+                    body: message,
+                });
+            }
+        });
+
+
         // Add event listeners to the buttons
         start.addEventListener('click', startVideo);
         stop.addEventListener('click', stopVideo);
+
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted');
+                } else {
+                    console.warn('Notification permission denied');
+                }
+            });
+        }
+
     </script>
 </body>
+
 </html>

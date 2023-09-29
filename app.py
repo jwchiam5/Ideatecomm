@@ -4,9 +4,11 @@ import os
 import numpy as np
 import face_recognition
 import time
+from flask_socketio import SocketIO
+from flask_socketio import emit
 
 app = Flask(__name__)
-
+socketio = SocketIO(app)
 path = 'image'
 images = []
 classNames = []
@@ -28,16 +30,17 @@ encodeLiKnown = findEncodings(images)
 print('Encoding is done')
 
 cam = cv2.VideoCapture(0)
-
+message = ''
 def generate_frames():
     # global i, fall_counter, fall_threshold,j
     cam = cv2.VideoCapture(0)
+    global message
     name = ''
     i = 0
 
     # Initialize fall detection variables
     fitToEllipse = False
-    time.sleep(2)
+    time.sleep(1)
     fgbg = cv2.createBackgroundSubtractorMOG2()
     j = 0
     fall_counter = 0
@@ -60,7 +63,7 @@ def generate_frames():
             if match[matchIndex]:
                 name = classNames[matchIndex].upper()
             else:
-                name = 'Unknown'
+                name = 'Joon Wee'
 
             (y1, x2, y2, x1) = faceLoc
             (y1, x2, y2, x1) = (y1 * 4, x2 * 4, y2 * 4, x1 * 4)
@@ -92,9 +95,14 @@ def generate_frames():
                 j += 1
                 if j > fall_threshold:
                     fall_counter += 1
+                    message = f"FALL for {name}"
+                    with app.app_context():
+                            socketio.emit('notification', message, namespace='/notification')
+                        
                     print("FALL", fall_counter,name)
                     cv2.putText(img, 'FALL', (x, y), cv2.FONT_HERSHEY_TRIPLEX, 0.5, (0, 0, 255), 2)
                     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                    break
             else:
                 j = 0
                 cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -119,5 +127,8 @@ def stop_video():
     cv2.destroyAllWindows()
     return "Video feed stopped"
 
+@socketio.on('connect', namespace='/notification')
+def handle_connect():
+    print('WebSocket connected')
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
