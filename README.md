@@ -1,4 +1,4 @@
-# IdeateComm
+# ElderCare 1.0
 
 This is a fall detection and facial recognition to help open nursing house concept to make sure that all elderly safety are taken care off
 
